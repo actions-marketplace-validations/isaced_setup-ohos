@@ -95,7 +95,7 @@ jobs:
 
           build() {
               mkdir -p build && cd build
-              cmake ../src $*
+              eval cmake ../src $*
               make -j$(nproc)
           }
 
