@@ -97,10 +97,13 @@ jobs:
           # args already correctly split. Pass them through verbatim with "$@"
           # — do NOT use `eval cmake ../src $*`, which would re-split
           # `-G "Unix Makefiles"` into `-G Unix Makefiles` and break cmake.
+          # Each function manages its own cwd and returns to $OLDPWD,
+          # matching lycium's own HPKBUILD conventions (see cJSON).
           build() {
               mkdir -p build && cd build
               cmake ../src "$@"
               make -j$(nproc)
+              cd "$OLDPWD"
           }
 
           package() {
