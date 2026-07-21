@@ -104,8 +104,11 @@ jobs:
           }
 
           package() {
-              cd build
-              make install
+              make -C build install
+          }
+
+          check() {
+              :
           }
 
           cleanbuild() {
