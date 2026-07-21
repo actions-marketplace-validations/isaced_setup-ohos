@@ -49,6 +49,31 @@ jobs:
           test -d "$LYCIUM_HOME/lycium/usr"
           echo "lycium checks passed!"
 
+  test-lycium-build:
+    name: Test lycium build (cJSON)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup OHOS SDK with lycium
+        uses: ./
+        with:
+          sdk-version: '6.0-Release'
+          lycium: true
+          tools: minimal
+
+      - name: Build cJSON with lycium
+        run: |
+          cd $LYCIUM_HOME/lycium
+          ./build.sh cJSON
+
+      - name: Verify build output
+        run: |
+          echo "Checking cJSON build artifacts..."
+          find $LYCIUM_HOME/lycium/usr/cJSON -name "*.a" -o -name "*.so" | head -10
+          test -d "$LYCIUM_HOME/lycium/usr/cJSON"
+          echo "cJSON build test passed!"
+
   test-no-tools:
     name: Test with tools=none
     runs-on: ubuntu-latest
