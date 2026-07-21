@@ -1,0 +1,79 @@
+name: 'Setup OpenHarmony SDK'
+description: 'Download and cache the OpenHarmony NDK, set up cross-compilation environment, optionally install lycium framework'
+branding:
+  icon: 'cpu'
+  color: 'blue'
+
+inputs:
+  sdk-version:
+    description: 'OpenHarmony SDK version (e.g. 5.0-Release, 6.0-Release)'
+    required: false
+    default: '6.0-Release'
+  sdk-url:
+    description: 'Custom SDK download URL (overrides default Huawei Cloud mirror)'
+    required: false
+    default: ''
+  lycium:
+    description: 'Clone and set up lycium cross-compilation framework'
+    required: false
+    default: 'false'
+  lycium-repo:
+    description: 'lycium git repository URL'
+    required: false
+    default: 'https://gitcode.com/OpenHarmonyPCDeveloper/lycium_plusplus.git'
+  lycium-ref:
+    description: 'lycium git ref (branch/tag/commit) to checkout'
+    required: false
+    default: ''
+  tools:
+    description: 'Tool installation level: none, minimal (lycium checkbuildenv), full (Docker-equivalent)'
+    required: false
+    default: 'minimal'
+
+outputs:
+  ohos-sdk:
+    description: 'Path to OHOS SDK (parent of native/, i.e. the linux/ directory)'
+    value: ${{ steps.env.outputs.ohos-sdk }}
+  ohos-native:
+    description: 'Path to OHOS SDK native directory'
+    value: ${{ steps.env.outputs.ohos-native }}
+  ohos-cmake-toolchain:
+    description: 'Path to ohos.toolchain.cmake for CMake cross-compilation'
+    value: ${{ steps.env.outputs.ohos-cmake-toolchain }}
+  lycium-home:
+    description: 'Path to lycium framework root (empty if lycium=false)'
+    value: ${{ steps.lycium.outputs.lycium-home }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install build tools
+      if: inputs.tools != 'none'
+      shell: bash
+      run: ${{ github.action_path }}/scripts/install-tools.sh
+      env:
+        TOOLS_LEVEL: ${{ inputs.tools }}
+
+    - name: Download and cache OHOS SDK
+      id: sdk
+      shell: bash
+      run: ${{ github.action_path }}/scripts/download-sdk.sh
+      env:
+        SDK_VERSION: ${{ inputs.sdk-version }}
+        SDK_URL: ${{ inputs.sdk-url }}
+
+    - name: Set up environment
+      id: env
+      shell: bash
+      run: ${{ github.action_path }}/scripts/setup-env.sh
+      env:
+        SDK_PATH: ${{ steps.sdk.outputs.sdk-path }}
+
+    - name: Set up lycium
+      id: lycium
+      if: inputs.lycium == 'true'
+      shell: bash
+      run: ${{ github.action_path }}/scripts/setup-lycium.sh
+      env:
+        LYCIUM_REPO: ${{ inputs.lycium-repo }}
+        LYCIUM_REF: ${{ inputs.lycium-ref }}

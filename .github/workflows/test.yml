@@ -1,0 +1,67 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-minimal:
+    name: Test minimal setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup OHOS SDK
+        uses: ./
+        with:
+          sdk-version: '6.0-Release'
+          tools: minimal
+
+      - name: Verify environment
+        run: |
+          echo "OHOS_SDK=$OHOS_SDK"
+          echo "OHOS_NDK_HOME=$OHOS_NDK_HOME"
+          echo "OHOS_CMAKE_TOOLCHAIN=$OHOS_CMAKE_TOOLCHAIN"
+          test -d "$OHOS_SDK/native/llvm/bin"
+          test -f "$OHOS_NDK_HOME/llvm/bin/clang"
+          echo "All checks passed!"
+
+  test-lycium:
+    name: Test lycium setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup OHOS SDK with lycium
+        uses: ./
+        with:
+          sdk-version: '6.0-Release'
+          lycium: true
+          tools: minimal
+
+      - name: Verify lycium
+        run: |
+          echo "LYCIUM_HOME=$LYCIUM_HOME"
+          test -d "$LYCIUM_HOME/lycium"
+          test -f "$LYCIUM_HOME/lycium/build.sh"
+          test -d "$LYCIUM_HOME/lycium/usr"
+          echo "lycium checks passed!"
+
+  test-no-tools:
+    name: Test with tools=none
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup OHOS SDK (no tools)
+        uses: ./
+        with:
+          sdk-version: '6.0-Release'
+          tools: none
+
+      - name: Verify environment
+        run: |
+          test -d "$OHOS_SDK/native"
+          echo "SDK-only setup passed!"
