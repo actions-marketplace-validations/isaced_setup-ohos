@@ -54,13 +54,21 @@ runs:
       env:
         TOOLS_LEVEL: ${{ inputs.tools }}
 
-    - name: Download and cache OHOS SDK
+    - name: Cache OHOS SDK
+      id: sdk-cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/ohos-sdk
+        key: ohos-sdk-${{ inputs.sdk-version }}
+
+    - name: Download and extract OHOS SDK
       id: sdk
       shell: bash
       run: ${{ github.action_path }}/scripts/download-sdk.sh
       env:
         SDK_VERSION: ${{ inputs.sdk-version }}
         SDK_URL: ${{ inputs.sdk-url }}
+        SDK_CACHE_HIT: ${{ steps.sdk-cache.outputs.cache-hit }}
 
     - name: Set up environment
       id: env

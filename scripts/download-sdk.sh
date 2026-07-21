@@ -1,15 +1,17 @@
 #!/bin/bash
 # Download and extract the OpenHarmony SDK.
-# Uses local directory caching - skips download if SDK already exists.
-# Users can combine with actions/cache for cross-run persistence.
+# When actions/cache restores the SDK directory, download is skipped entirely.
 set -eu
 
 SDK_VERSION="${SDK_VERSION}"
 SDK_URL="${SDK_URL:-https://repo.huaweicloud.com/openharmony/os/${SDK_VERSION}/ohos-sdk-windows_linux-public.tar.gz}"
+SDK_CACHE_HIT="${SDK_CACHE_HIT:-false}"
 CACHE_DIR="$RUNNER_TEMP/ohos-sdk/${SDK_VERSION}"
 
-if [ -d "$CACHE_DIR/linux/native" ]; then
-  echo "SDK cache hit: $CACHE_DIR"
+if [ "$SDK_CACHE_HIT" = "true" ] && [ -d "$CACHE_DIR/linux/native" ]; then
+  echo "SDK restored from cache: $CACHE_DIR"
+elif [ -d "$CACHE_DIR/linux/native" ]; then
+  echo "SDK already exists locally: $CACHE_DIR"
 else
   echo "Downloading OHOS SDK ${SDK_VERSION}..."
   echo "URL: $SDK_URL"
