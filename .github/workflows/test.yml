@@ -93,9 +93,13 @@ jobs:
           SRC
           }
 
+          # lycium's sure() calls `eval $*`, so build() receives the cmake
+          # args already correctly split. Pass them through verbatim with "$@"
+          # — do NOT use `eval cmake ../src $*`, which would re-split
+          # `-G "Unix Makefiles"` into `-G Unix Makefiles` and break cmake.
           build() {
               mkdir -p build && cd build
-              eval cmake ../src $*
+              cmake ../src "$@"
               make -j$(nproc)
           }
 
