@@ -46,10 +46,13 @@ steps:
   - uses: isaced/setup-ohos@v1
     with:
       lycium: true
-      tools: full
+      tools: minimal
   - run: |
       cd $LYCIUM_HOME/lycium
-      ./build.sh curl
+      ./build.sh cJSON
+  - run: |
+      find $LYCIUM_HOME/lycium/usr/cJSON -type f
+      test -f "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/lib/libcjson.a"
 ```
 
 ### With SDK caching (recommended for frequent builds)
@@ -68,9 +71,9 @@ steps:
       sdk-version: '6.1-Release'
 ```
 
-### Cross-compile a bundled third-party library
+### Cross-compile a custom package
 
-lycium ships 348 third-party libraries with pre-written `HPKBUILD` recipes under `$LYCIUM_HOME/thirdparty/`. Pass the directory name to `build.sh`:
+To build a package that is **not** in lycium's `thirdparty/`, download its `HPKBUILD` recipe (and any dependency recipes) from the upstream [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository, then run `build.sh`:
 
 ```yaml
 steps:
@@ -79,19 +82,35 @@ steps:
     with:
       sdk-version: '6.1-Release'
       lycium: true
-      tools: minimal
+      tools: full
+
+  # Download HPKBUILD for the target package and its dependencies
+  - run: |
+      for pkg in openssl zlib nghttp2 curl; do
+        mkdir -p $LYCIUM_HOME/thirdparty/$pkg
+        curl -s -o $LYCIUM_HOME/thirdparty/$pkg/HPKBUILD \
+          https://raw.gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/raw/master/thirdparty/$pkg/HPKBUILD
+      done
+
   - run: |
       cd $LYCIUM_HOME/lycium
-      ./build.sh cJSON
+      ./build.sh curl
+
   - run: |
-      find $LYCIUM_HOME/lycium/usr/cJSON -type f
-      test -f "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/lib/libcjson.a"
-      test -f "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/include/cjson/cJSON.h"
+      test -f "$LYCIUM_HOME/lycium/usr/curl/arm64-v8a/lib/libcurl.a"
 ```
 
-### Cross-compile a custom package
+For simpler packages with no dependencies (`depends=()`), a single HPKBUILD suffices:
 
-To build a package that is **not** in lycium's `thirdparty/`, write a `HPKBUILD` recipe and place it under `$LYCIUM_HOME/thirdparty/<your-pkg>/`. See lycium's [HPKBUILD template](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/blob/master/lycium/template/HPKBUILD) for the format. Once the recipe is in place, `./build.sh <your-pkg>` works the same as for bundled packages.
+```yaml
+- run: |
+    mkdir -p $LYCIUM_HOME/thirdparty/cJSON
+    curl -s -o $LYCIUM_HOME/thirdparty/cJSON/HPKBUILD \
+      https://raw.gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/raw/master/thirdparty/cJSON/HPKBUILD
+- run: cd $LYCIUM_HOME/lycium && ./build.sh cJSON
+```
+
+See lycium's [HPKBUILD template](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/blob/master/lycium/template/HPKBUILD) for the recipe format if you need to write one from scratch.
 
 ### Use step outputs instead of env vars
 
@@ -152,7 +171,7 @@ The action runs as a composite action with the following steps:
 
 1. **Install build tools** (if `tools != 'none'`) — `apt-get install` the selected tool set
 2. **Cache OHOS SDK** — `actions/cache@v4` on `${{ runner.temp }}/ohos-sdk`, keyed by SDK version
-3. **Download and extract SDK** — `wget` + `tar` from Huawei Cloud (or `sdk-url`), extracts the `linux/native/` toolchain
+3. **Download and extract SDK** — `curl` + `tar` from Huawei Cloud (or `sdk-url`), extracts the `linux/native/` toolchain
 4. **Set up environment** — exports `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, updates `PATH`
 5. **Set up lycium** (if `lycium == 'true'`) — clones the [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The repo includes both the lycium framework (`lycium/build.sh`) and 348 third-party package recipes (`thirdparty/<pkg>/HPKBUILD`).
 
