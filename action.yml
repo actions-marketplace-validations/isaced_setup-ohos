@@ -6,9 +6,9 @@ branding:
 
 inputs:
   sdk-version:
-    description: 'OpenHarmony SDK version (e.g. 5.0-Release, 6.0-Release)'
+    description: 'OpenHarmony SDK version (e.g. 5.0-Release, 6.1-Release)'
     required: false
-    default: '6.0-Release'
+    default: '6.1-Release'
   sdk-url:
     description: 'Custom SDK download URL (overrides default Huawei Cloud mirror)'
     required: false

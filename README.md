@@ -62,10 +62,10 @@ steps:
   - uses: actions/cache@v4
     with:
       path: ${{ runner.temp }}/ohos-sdk
-      key: ohos-sdk-6.0-Release
+      key: ohos-sdk-6.1-Release
   - uses: isaced/setup-ohos@v1
     with:
-      sdk-version: '6.0-Release'
+      sdk-version: '6.1-Release'
 ```
 
 ### Cross-compile a bundled third-party library
@@ -77,7 +77,7 @@ steps:
   - uses: actions/checkout@v4
   - uses: isaced/setup-ohos@v1
     with:
-      sdk-version: '6.0-Release'
+      sdk-version: '6.1-Release'
       lycium: true
       tools: minimal
   - run: |
@@ -110,7 +110,7 @@ steps:
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `sdk-version` | OpenHarmony SDK version (e.g. `5.0-Release`, `6.0-Release`) | `6.0-Release` |
+| `sdk-version` | OpenHarmony SDK version (e.g. `5.0-Release`, `6.1-Release`) | `6.1-Release` |
 | `sdk-url` | Custom SDK download URL (overrides default Huawei Cloud mirror) | `''` |
 | `lycium` | Clone and set up lycium framework | `false` |
 | `lycium-repo` | lycium git repository URL | `https://gitcode.com/openharmony-sig/tpc_c_cplusplus.git` |
@@ -177,6 +177,7 @@ Tested against the following OpenHarmony SDK releases:
 
 | Version | Status |
 |---------|--------|
+| `6.1-Release` | ✅ Tested (default) |
 | `6.0-Release` | ✅ Tested |
 | `5.0-Release` | ✅ Tested |
 
