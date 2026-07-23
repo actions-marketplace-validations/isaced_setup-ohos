@@ -28,27 +28,6 @@ jobs:
           test -f "$OHOS_NDK_HOME/llvm/bin/clang"
           echo "All checks passed!"
 
-  test-lycium:
-    name: Test lycium setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup OHOS SDK with lycium
-        uses: ./
-        with:
-          sdk-version: '6.0-Release'
-          lycium: true
-          tools: minimal
-
-      - name: Verify lycium
-        run: |
-          echo "LYCIUM_HOME=$LYCIUM_HOME"
-          test -d "$LYCIUM_HOME/lycium"
-          test -f "$LYCIUM_HOME/lycium/build.sh"
-          test -d "$LYCIUM_HOME/lycium/usr"
-          echo "lycium checks passed!"
-
   test-lycium-build:
     name: Test lycium build (hello)
     runs-on: ubuntu-latest
