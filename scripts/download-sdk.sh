@@ -29,7 +29,7 @@ else
   cd "$CACHE_DIR/linux"
   for i in *.zip; do
     [ -f "$i" ] || continue
-    if [ "$i" = "native.zip" ]; then
+    if [[ "$i" == native-*.zip ]]; then
       echo "Extracting $i..."
       unzip -q "$i"
     else
