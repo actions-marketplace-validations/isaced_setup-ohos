@@ -135,6 +135,41 @@ jobs:
           grep -i hello "$LYCIUM_HOME/lycium/usr/hpk_build.csv"
           echo "lycium build test passed!"
 
+  test-lycium-build-cjson:
+    name: Test lycium build (cJSON)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup OHOS SDK with lycium
+        uses: ./
+        with:
+          sdk-version: '6.0-Release'
+          lycium: true
+          tools: minimal
+
+      - name: Create cJSON HPKBUILD
+        run: |
+          ${{ github.workspace }}/scripts/prepare-cjson-test.sh
+
+      - name: Build cJSON with lycium
+        run: |
+          cd $LYCIUM_HOME/lycium
+          ./build.sh cJSON
+
+      - name: Verify build output
+        run: |
+          echo "=== Checking build artifacts ==="
+          find $LYCIUM_HOME/lycium/usr/cJSON -type f
+          test -f "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/lib/libcjson.a" -o \
+               -f "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/lib/libcjson.so"
+          test -d "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/include"
+          test -f "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/include/cjson/cJSON.h"
+          echo "=== Build record ==="
+          cat "$LYCIUM_HOME/lycium/usr/hpk_build.csv"
+          grep -i cjson "$LYCIUM_HOME/lycium/usr/hpk_build.csv"
+          echo "lycium cJSON build test passed!"
+
   test-no-tools:
     name: Test with tools=none
     runs-on: ubuntu-latest
