@@ -16,7 +16,6 @@ jobs:
       - name: Setup OHOS SDK
         uses: ./
         with:
-          sdk-version: '6.0-Release'
           tools: minimal
 
       - name: Verify environment
@@ -37,7 +36,6 @@ jobs:
       - name: Setup OHOS SDK with lycium
         uses: ./
         with:
-          sdk-version: '6.0-Release'
           lycium: true
           tools: minimal
 
@@ -123,7 +121,6 @@ jobs:
       - name: Setup OHOS SDK with lycium
         uses: ./
         with:
-          sdk-version: '6.0-Release'
           lycium: true
           tools: minimal
 
@@ -154,7 +151,6 @@ jobs:
       - name: Setup OHOS SDK (no tools)
         uses: ./
         with:
-          sdk-version: '6.0-Release'
           tools: none
 
       - name: Verify environment

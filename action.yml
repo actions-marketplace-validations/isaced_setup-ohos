@@ -58,8 +58,10 @@ runs:
       id: sdk-cache
       uses: actions/cache@v4
       with:
-        path: ${{ runner.temp }}/ohos-sdk
+        path: ${{ runner.temp }}/ohos-sdk/${{ inputs.sdk-version }}
         key: ohos-sdk-${{ inputs.sdk-version }}
+        restore-keys: |
+          ohos-sdk-
 
     - name: Download and extract OHOS SDK
       id: sdk
