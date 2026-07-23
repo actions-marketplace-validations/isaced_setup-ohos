@@ -24,12 +24,17 @@ else
   # Remove Windows SDK (not needed on Linux runners)
   rm -rf "$CACHE_DIR/windows"
 
-  # Extract zip archives inside linux/ directory
+  # Extract zip archives inside linux/ directory.
+  # Lycium only needs the native toolchain, skip the rest.
   cd "$CACHE_DIR/linux"
   for i in *.zip; do
     [ -f "$i" ] || continue
-    echo "Extracting $i..."
-    unzip -q "$i"
+    if [ "$i" = "native.zip" ]; then
+      echo "Extracting $i..."
+      unzip -q "$i"
+    else
+      echo "Skip $i (not needed)"
+    fi
     rm "$i"
   done
 fi
