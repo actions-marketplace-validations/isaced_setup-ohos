@@ -1,4 +1,4 @@
-name: 'Setup OpenHarmony SDK'
+name: 'setup-ohos'
 description: 'Download and cache the OpenHarmony NDK, set up cross-compilation environment, optionally install lycium framework'
 branding:
   icon: 'cpu'
