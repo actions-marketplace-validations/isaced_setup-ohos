@@ -148,10 +148,6 @@ jobs:
           lycium: true
           tools: minimal
 
-      - name: Create cJSON HPKBUILD
-        run: |
-          ${{ github.workspace }}/scripts/prepare-cjson-test.sh
-
       - name: Build cJSON with lycium
         run: |
           cd $LYCIUM_HOME/lycium

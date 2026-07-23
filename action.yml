@@ -20,7 +20,7 @@ inputs:
   lycium-repo:
     description: 'lycium git repository URL'
     required: false
-    default: 'https://gitcode.com/OpenHarmonyPCDeveloper/lycium_plusplus.git'
+    default: 'https://gitcode.com/openharmony-sig/tpc_c_cplusplus.git'
   lycium-ref:
     description: 'lycium git ref (branch/tag/commit) to checkout'
     required: false
