@@ -9,7 +9,7 @@ It handles SDK download/extraction, environment variable setup, PATH configurati
 - Downloads and caches the OpenHarmony SDK (native toolchain)
 - Sets up `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, and `PATH` environment variables
 - Detects and exports the CMake toolchain file path (`ohos.toolchain.cmake`)
-- Optionally clones and sets up the [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) cross-compilation framework
+- Optionally clones and sets up the [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) cross-compilation framework. See the official [Huawei guide](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/toolchain-lycium-build-project) for using lycium to cross-compile third-party libraries.
 - Optionally installs build tools (`minimal`, `full`, or `none`)
 - Pure shell implementation — zero dependencies, fully transparent
 
