@@ -9,7 +9,6 @@ TOOLS_LEVEL="${TOOLS_LEVEL:-minimal}"
 
 if [ "$TOOLS_LEVEL" = "minimal" ]; then
   echo "::group::Installing minimal build tools"
-  sudo apt-get update -qq
   sudo apt-get install -y -qq \
     gcc g++ cmake make ninja-build \
     pkg-config autoconf automake \
@@ -17,7 +16,6 @@ if [ "$TOOLS_LEVEL" = "minimal" ]; then
   echo "::endgroup::"
 elif [ "$TOOLS_LEVEL" = "full" ]; then
   echo "::group::Installing full build tools"
-  sudo apt-get update -qq
   sudo apt-get install -y -qq \
     build-essential gcc g++ gcc-multilib g++-multilib \
     cmake make ninja-build \
