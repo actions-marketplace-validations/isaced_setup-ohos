@@ -1,6 +1,6 @@
 # setup-ohos
 
-A GitHub Action to download and set up the OpenHarmony NDK cross-compilation environment, with optional [lycium](https://gitcode.com/openharmony-sig/tpc_c_cplusplus) framework support.
+A GitHub Action to download and set up the OpenHarmony NDK cross-compilation environment, with optional [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) framework support.
 
 It handles SDK download/extraction, environment variable setup, PATH configuration, and optional installation of the lycium cross-compilation framework — so your workflow can go straight to `cmake` or `./build.sh <package>`.
 
@@ -9,7 +9,7 @@ It handles SDK download/extraction, environment variable setup, PATH configurati
 - Downloads and caches the OpenHarmony SDK (native toolchain)
 - Sets up `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, and `PATH` environment variables
 - Detects and exports the CMake toolchain file path (`ohos.toolchain.cmake`)
-- Optionally clones and sets up the [lycium](https://gitcode.com/openharmony-sig/tpc_c_cplusplus) cross-compilation framework
+- Optionally clones and sets up the [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) cross-compilation framework
 - Optionally installs build tools (`minimal`, `full`, or `none`)
 - Pure shell implementation — zero dependencies, fully transparent
 
@@ -91,7 +91,7 @@ steps:
 
 ### Cross-compile a custom package
 
-To build a package that is **not** in lycium's `thirdparty/`, write a `HPKBUILD` recipe and place it under `$LYCIUM_HOME/thirdparty/<your-pkg>/`. See lycium's [HPKBUILD template](https://gitcode.com/openharmony-sig/tpc_c_cplusplus/blob/master/lycium/template/HPKBUILD) for the format. Once the recipe is in place, `./build.sh <your-pkg>` works the same as for bundled packages.
+To build a package that is **not** in lycium's `thirdparty/`, write a `HPKBUILD` recipe and place it under `$LYCIUM_HOME/thirdparty/<your-pkg>/`. See lycium's [HPKBUILD template](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/blob/master/lycium/template/HPKBUILD) for the format. Once the recipe is in place, `./build.sh <your-pkg>` works the same as for bundled packages.
 
 ### Use step outputs instead of env vars
 
@@ -113,7 +113,7 @@ steps:
 | `sdk-version` | OpenHarmony SDK version (e.g. `5.0-Release`, `6.1-Release`) | `6.1-Release` |
 | `sdk-url` | Custom SDK download URL (overrides default Huawei Cloud mirror) | `''` |
 | `lycium` | Clone and set up lycium framework | `false` |
-| `lycium-repo` | lycium git repository URL | `https://gitcode.com/openharmony-sig/tpc_c_cplusplus.git` |
+| `lycium-repo` | lycium git repository URL | `https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus.git` |
 | `lycium-ref` | lycium git ref (branch/tag/commit) | `''` (default branch) |
 | `tools` | Tool installation level: `none`, `minimal`, `full` | `minimal` |
 
@@ -154,7 +154,7 @@ The action runs as a composite action with the following steps:
 2. **Cache OHOS SDK** — `actions/cache@v4` on `${{ runner.temp }}/ohos-sdk`, keyed by SDK version
 3. **Download and extract SDK** — `wget` + `tar` from Huawei Cloud (or `sdk-url`), extracts the `linux/native/` toolchain
 4. **Set up environment** — exports `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, updates `PATH`
-5. **Set up lycium** (if `lycium == 'true'`) — clones the [`tpc_c_cplusplus`](https://gitcode.com/openharmony-sig/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The repo includes both the lycium framework (`lycium/build.sh`) and 348 third-party package recipes (`thirdparty/<pkg>/HPKBUILD`).
+5. **Set up lycium** (if `lycium == 'true'`) — clones the [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The repo includes both the lycium framework (`lycium/build.sh`) and 348 third-party package recipes (`thirdparty/<pkg>/HPKBUILD`).
 
 After setup, the directory layout is:
 
