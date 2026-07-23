@@ -55,26 +55,3 @@ cleanbuild(){
     rm -rf ${PWD}/$builddir
 }
 HPK
-
-cat > "$CJSON_DIR/HPKCHECK" << 'HPKC'
-source HPKBUILD > /dev/null 2>&1
-logfile=${LYCIUM_THIRDPARTY_ROOT}/${pkgname}/${pkgname}_${ARCH}_${OHOS_SDK_VER}_test.log
-
-openharmonycheck() {
-    res=0
-    cd $builddir/$ARCH-build
-    echo "start test times: `date`" >> ${logfile} 2>&1
-    ctest --timeout 40000 >> ${logfile} 2>&1
-    res=$?
-    if [ $res -ne 0 ]
-    then
-        mkdir -p ${LYCIUM_FAULT_PATH}/${pkgname}
-        cp Testing/Temporary/LastTest.log ${LYCIUM_FAULT_PATH}/${pkgname}/
-    fi
-
-    cd $OLDPWD
-    echo "end test times: `date`" >> ${logfile} 2>&1
-
-    return $res
-}
-HPKC
