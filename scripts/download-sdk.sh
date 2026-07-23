@@ -16,7 +16,7 @@ else
   echo "Downloading OHOS SDK ${SDK_VERSION}..."
   echo "URL: $SDK_URL"
   mkdir -p "$CACHE_DIR"
-  wget -q --show-progress -O /tmp/ohos-sdk.tar.gz "$SDK_URL"
+  curl -# -o /tmp/ohos-sdk.tar.gz "$SDK_URL" 2>&1
   echo "Extracting SDK..."
   tar -C "$CACHE_DIR" -zxf /tmp/ohos-sdk.tar.gz
   rm -f /tmp/ohos-sdk.tar.gz
