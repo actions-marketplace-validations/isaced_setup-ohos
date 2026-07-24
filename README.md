@@ -1,17 +1,26 @@
 # setup-ohos
 
-A GitHub Action to download and set up the OpenHarmony NDK cross-compilation environment, with optional [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) framework support.
+A GitHub Action to download and set up the OpenHarmony NDK cross-compilation environment, with optional [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) support.
 
-It handles SDK download/extraction, environment variable setup, PATH configuration, and optional installation of the lycium cross-compilation framework — so your workflow can go straight to `cmake` or `./build.sh <package>`.
+It handles SDK download/extraction, environment variable setup, PATH configuration, and optional setup of lycium, so your workflow can go straight to `cmake` or `./build.sh <package>`.
+
+> **What does `lycium: true` include?** The action shallow-clones the complete upstream
+> `tpc_c_cplusplus` repository into `$LYCIUM_HOME`. This provides both the lycium build
+> framework and its existing `thirdparty/<package>/HPKBUILD` recipe catalog. You do not
+> need to vendor or download a recipe that is already in that catalog. The action does
+> **not** prebuild those libraries; run `./build.sh <package>` to produce the binaries.
 
 ## Features
 
 - Downloads and caches the OpenHarmony SDK (native toolchain)
 - Sets up `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, and `PATH` environment variables
 - Detects and exports the CMake toolchain file path (`ohos.toolchain.cmake`)
-- Optionally clones and sets up the [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) cross-compilation framework. See the official [Huawei guide](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/toolchain-lycium-build-project) for using lycium to cross-compile third-party libraries.
+- With `lycium: true`, clones the complete [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository, including the build framework and hundreds of existing third-party package recipes
+- Lets lycium resolve and build dependencies declared by an existing package recipe
 - Optionally installs build tools (`minimal`, `full`, or `none`)
 - Pure shell implementation — zero dependencies, fully transparent
+
+See the official [Huawei guide](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/toolchain-lycium-build-project) for background on using lycium to cross-compile third-party libraries.
 
 ## Usage
 
@@ -38,7 +47,10 @@ steps:
       sdk-version: '5.0-Release'
 ```
 
-### With lycium framework
+### Build a package from the cloned recipe catalog
+
+Setting `lycium: true` makes the cloned recipe catalog available under
+`$LYCIUM_HOME/thirdparty`. If the package recipe exists there, build it directly:
 
 ```yaml
 steps:
@@ -48,12 +60,16 @@ steps:
       lycium: true
       tools: minimal
   - run: |
+      test -f "$LYCIUM_HOME/thirdparty/cJSON/HPKBUILD"
       cd $LYCIUM_HOME/lycium
       ./build.sh cJSON
   - run: |
       find $LYCIUM_HOME/lycium/usr/cJSON -type f
       test -f "$LYCIUM_HOME/lycium/usr/cJSON/arm64-v8a/lib/libcjson.a"
 ```
+
+Lycium reads `depends=(...)` from the selected `HPKBUILD` and builds available dependency
+recipes first. Build output is written to `$LYCIUM_HOME/lycium/usr/<package>/<ABI>/`.
 
 ### With SDK caching (recommended for frequent builds)
 
@@ -71,9 +87,26 @@ steps:
       sdk-version: '6.1-Release'
 ```
 
-### Cross-compile a custom package
+### Check whether a package recipe is included
 
-To build a package that is **not** in lycium's `thirdparty/`, download its `HPKBUILD` recipe (and any dependency recipes) from the upstream [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository, then run `build.sh`:
+The catalog comes from the repository selected by `lycium-repo` and `lycium-ref`. Check
+the cloned tree instead of copying recipes into your application repository:
+
+```yaml
+- name: Check libsmbclient recipe
+  run: |
+    test -f "$LYCIUM_HOME/thirdparty/libsmbclient/HPKBUILD"
+    sed -n '1,40p' "$LYCIUM_HOME/thirdparty/libsmbclient/HPKBUILD"
+```
+
+Common packages such as `cJSON`, `curl`, `zlib`, and `libsmbclient` can be built this way
+when they are present in the selected upstream revision.
+
+### Add a package that is not in the catalog
+
+Only add a recipe yourself when it is absent from `$LYCIUM_HOME/thirdparty`. Keep the
+custom recipe in your own repository, copy it into the cloned catalog, then run
+`build.sh` normally:
 
 ```yaml
 steps:
@@ -84,33 +117,22 @@ steps:
       lycium: true
       tools: full
 
-  # Download HPKBUILD for the target package and its dependencies
+  # This directory belongs to your repository, not setup-ohos.
   - run: |
-      for pkg in openssl zlib nghttp2 curl; do
-        mkdir -p $LYCIUM_HOME/thirdparty/$pkg
-        curl -s -o $LYCIUM_HOME/thirdparty/$pkg/HPKBUILD \
-          https://raw.gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/raw/master/thirdparty/$pkg/HPKBUILD
-      done
+      test ! -e "$LYCIUM_HOME/thirdparty/my-library"
+      cp -R "$GITHUB_WORKSPACE/lycium-packages/my-library" \
+        "$LYCIUM_HOME/thirdparty/my-library"
 
   - run: |
       cd $LYCIUM_HOME/lycium
-      ./build.sh curl
+      ./build.sh my-library
 
   - run: |
-      test -f "$LYCIUM_HOME/lycium/usr/curl/arm64-v8a/lib/libcurl.a"
+      find "$LYCIUM_HOME/lycium/usr/my-library" -type f
 ```
 
-For simpler packages with no dependencies (`depends=()`), a single HPKBUILD suffices:
-
-```yaml
-- run: |
-    mkdir -p $LYCIUM_HOME/thirdparty/cJSON
-    curl -s -o $LYCIUM_HOME/thirdparty/cJSON/HPKBUILD \
-      https://raw.gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/raw/master/thirdparty/cJSON/HPKBUILD
-- run: cd $LYCIUM_HOME/lycium && ./build.sh cJSON
-```
-
-See lycium's [HPKBUILD template](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/blob/master/lycium/template/HPKBUILD) for the recipe format if you need to write one from scratch.
+If the custom recipe declares dependencies that are also absent from the cloned catalog,
+add those recipes as well. See lycium's [HPKBUILD template](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/blob/master/lycium/template/HPKBUILD) for the recipe format.
 
 ### Use step outputs instead of env vars
 
@@ -131,7 +153,7 @@ steps:
 |-------|-------------|---------|
 | `sdk-version` | OpenHarmony SDK version (e.g. `5.0-Release`, `6.1-Release`) | `6.1-Release` |
 | `sdk-url` | Custom SDK download URL (overrides default Huawei Cloud mirror) | `''` |
-| `lycium` | Clone and set up lycium framework | `false` |
+| `lycium` | Clone the complete lycium repository, including its `thirdparty` recipe catalog | `false` |
 | `lycium-repo` | lycium git repository URL | `https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus.git` |
 | `lycium-ref` | lycium git ref (branch/tag/commit) | `''` (default branch) |
 | `tools` | Tool installation level: `none`, `minimal`, `full` | `minimal` |
@@ -143,7 +165,7 @@ steps:
 | `ohos-sdk` | Path to OHOS SDK (parent of `native/`, i.e. the `linux/` directory) |
 | `ohos-native` | Path to OHOS SDK native directory |
 | `ohos-cmake-toolchain` | Path to `ohos.toolchain.cmake` for CMake cross-compilation |
-| `lycium-home` | Path to lycium framework root (empty if `lycium=false`) |
+| `lycium-home` | Path to the cloned `tpc_c_cplusplus` repository root (empty if `lycium=false`) |
 
 ## Environment Variables
 
@@ -155,14 +177,14 @@ After this action runs, the following variables are available in subsequent step
 | `OHOS_NDK_HOME` | Path to `native/` directory |
 | `OHOS_CMAKE_TOOLCHAIN` | Path to CMake toolchain file |
 | `LYCIUM_BUILD_CHECK` | Set to `false` (skip device tests in CI) |
-| `LYCIUM_HOME` | lycium root directory (only if `lycium=true`) |
+| `LYCIUM_HOME` | Cloned `tpc_c_cplusplus` repository root (only if `lycium=true`) |
 
 The toolchain binaries (`llvm/bin`) and the SDK's bundled CMake (`build-tools/cmake/bin`) are also prepended to `PATH`.
 
 ## Tool Levels
 
 - **`minimal`** — Tools required by lycium's `checkbuildenv()`: gcc, g++, cmake, make, ninja, pkg-config, autoconf, automake, patch, unzip, curl, wget, git
-- **`full`** — Docker-equivalent environment covering all 348 lycium thirdparty libraries: adds libtool, gperf, flex, bison, yasm, nasm, python3, meson, gettext, texinfo, and more
+- **`full`** — Broad tool set for packages in the lycium catalog: adds libtool, gperf, flex, bison, yasm, nasm, python3, meson, gettext, texinfo, and more
 - **`none`** — Skip tool installation entirely (use when you only need the SDK and have your own toolchain)
 
 ## How It Works
@@ -173,7 +195,7 @@ The action runs as a composite action with the following steps:
 2. **Cache OHOS SDK** — `actions/cache@v4` on `${{ runner.temp }}/ohos-sdk`, keyed by SDK version
 3. **Download and extract SDK** — `curl` + `tar` from Huawei Cloud (or `sdk-url`), extracts the `linux/native/` toolchain
 4. **Set up environment** — exports `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, updates `PATH`
-5. **Set up lycium** (if `lycium == 'true'`) — clones the [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The repo includes both the lycium framework (`lycium/build.sh`) and 348 third-party package recipes (`thirdparty/<pkg>/HPKBUILD`).
+5. **Set up lycium** (if `lycium == 'true'`) — shallow-clones the complete [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The clone includes both the lycium framework (`lycium/build.sh`) and the current upstream recipe catalog (`thirdparty/<package>/HPKBUILD`). No third-party package is compiled until your workflow runs `build.sh`.
 
 After setup, the directory layout is:
 
@@ -182,7 +204,7 @@ $LYCIUM_HOME/
 ├── lycium/          # lycium framework (build.sh, script/, template/)
 │   ├── build.sh
 │   └── usr/         # build output (automatically created)
-└── thirdparty/      # 348 third-party library recipes
+└── thirdparty/      # upstream third-party library recipe catalog
     ├── curl/HPKBUILD
     ├── cJSON/HPKBUILD
     └── ...
