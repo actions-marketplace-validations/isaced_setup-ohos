@@ -230,6 +230,10 @@ Other versions available on the [Huawei Cloud mirror](https://repo.huaweicloud.c
 - **No automatic device testing.** `LYCIUM_BUILD_CHECK` is set to `false` by default since CI runners are not OpenHarmony devices. Override this variable in a later step if you have a connected device.
 - **SDK layout assumptions.** The action expects `$SDK_PATH/native/llvm/bin/` and a `ohos.toolchain.cmake` under `native/build/cmake/` or `native/build-tools/cmake/share/`. Non-standard SDK layouts will fail the verification step.
 
+## Reference projects
+
+- [libsmb2-ohos](https://github.com/isaced/libsmb2-ohos) — SMB2/SMB3 client library for HarmonyOS/OpenHarmony, using `setup-ohos` for CI cross-compilation of the native libsmb2 library and its HAR packaging.
+
 ## License
 
 MIT
