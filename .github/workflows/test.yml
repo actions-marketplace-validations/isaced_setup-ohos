@@ -11,7 +11,7 @@ jobs:
     name: Test minimal setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup OHOS SDK
         uses: ./
@@ -31,7 +31,7 @@ jobs:
     name: Test lycium build (hello)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup OHOS SDK with lycium
         uses: ./
@@ -116,7 +116,7 @@ jobs:
     name: Test lycium build (cJSON)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup OHOS SDK with lycium
         uses: ./
@@ -146,7 +146,7 @@ jobs:
     name: Test with tools=none
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup OHOS SDK (no tools)
         uses: ./
