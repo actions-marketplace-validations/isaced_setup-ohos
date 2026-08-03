@@ -28,7 +28,7 @@ See the official [Huawei guide](https://developer.huawei.com/consumer/cn/doc/har
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: isaced/setup-ohos@v1
   - run: |
       cmake -B build \
@@ -41,7 +41,7 @@ steps:
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: isaced/setup-ohos@v1
     with:
       sdk-version: '5.0-Release'
@@ -54,7 +54,7 @@ Setting `lycium: true` makes the cloned recipe catalog available under
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: isaced/setup-ohos@v1
     with:
       lycium: true
@@ -77,8 +77,8 @@ Place `actions/cache` **before** `setup-ohos` so the action can skip re-download
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
-  - uses: actions/cache@v4
+  - uses: actions/checkout@v7
+  - uses: actions/cache@v6
     with:
       path: ${{ runner.temp }}/ohos-sdk
       key: ohos-sdk-6.1-Release
@@ -110,7 +110,7 @@ custom recipe in your own repository, copy it into the cloned catalog, then run
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: isaced/setup-ohos@v1
     with:
       sdk-version: '6.1-Release'
@@ -138,7 +138,7 @@ add those recipes as well. See lycium's [HPKBUILD template](https://gitcode.com/
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - id: ohos
     uses: isaced/setup-ohos@v1
   - run: |
@@ -192,7 +192,7 @@ The toolchain binaries (`llvm/bin`) and the SDK's bundled CMake (`build-tools/cm
 The action runs as a composite action with the following steps:
 
 1. **Install build tools** (if `tools != 'none'`) — `apt-get install` the selected tool set
-2. **Cache OHOS SDK** — `actions/cache@v4` on `${{ runner.temp }}/ohos-sdk`, keyed by SDK version
+2. **Cache OHOS SDK** — `actions/cache@v6` on `${{ runner.temp }}/ohos-sdk`, keyed by SDK version
 3. **Download and extract SDK** — `curl` + `tar` from Huawei Cloud (or `sdk-url`), extracts the `linux/native/` toolchain
 4. **Set up environment** — exports `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, updates `PATH`
 5. **Set up lycium** (if `lycium == 'true'`) — shallow-clones the complete [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The clone includes both the lycium framework (`lycium/build.sh`) and the current upstream recipe catalog (`thirdparty/<package>/HPKBUILD`). No third-party package is compiled until your workflow runs `build.sh`.
