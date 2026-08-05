@@ -1,4 +1,5 @@
 {
+  "modelVersion": "6.1.1",
   "name": "arkts-app",
   "version": "1.0.0",
   "description": "Minimal ArkTS fixture used by setup-ohos CI to validate hvigorw build & Local Test",
