@@ -1,0 +1,6 @@
+oh_modules/
+.hvigor/
+build/
+entry/.test/
+entry/build/
+*.log

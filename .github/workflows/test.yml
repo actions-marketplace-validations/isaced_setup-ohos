@@ -159,6 +159,10 @@ jobs:
           echo "SDK-only setup passed!"
 
   test-hvigor:
+    # NOTE: hvigor Local Test (hvigorw test) is NOT supported on Linux runners —
+    # it hangs at "> hvigor Linux" (official FAQ: "Linux环境暂不支持单元测试").
+    # Local Test is verified on macOS locally (2/2 cases pass); this job covers
+    # what Linux CAN do: toolchain setup, ohpm install and HAP assembly.
     name: Test hvigor (ArkTS build & Local Test)
     runs-on: ubuntu-latest
     steps:
@@ -188,10 +192,6 @@ jobs:
         working-directory: tests/fixtures/arkts-app
         run: ohpm install
 
-      - name: Run Local Test (unit tests)
-        working-directory: tests/fixtures/arkts-app
-        run: hvigorw test -p module=entry -p coverage=false
-
       - name: Build HAP (unsigned debug)
         working-directory: tests/fixtures/arkts-app
         run: hvigorw assembleHap --mode module -p module=entry@default -p buildMode=debug
@@ -199,9 +199,7 @@ jobs:
       - name: Verify build outputs
         working-directory: tests/fixtures/arkts-app
         run: |
-          echo "=== Test results ==="
-          find entry -path "*intermediates/test*" -name "*.txt" -exec cat {} \; || true
           echo "=== HAP artifacts ==="
           find entry/build -name "*.hap" -type f
           test -n "$(find entry/build -name '*.hap' -type f)"
-          echo "hvigor build & test passed!"
+          echo "hvigor build passed!"

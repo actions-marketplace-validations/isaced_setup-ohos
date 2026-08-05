@@ -152,6 +152,8 @@ steps:
   - run: ohpm install
 
   # Run Local Test unit tests (result under <module>/.test/default/intermediates/)
+  # NOTE: hvigor Local Test is supported on macOS/Windows only — Linux runners
+  # hang at "> hvigor Linux". Run it locally or on a macOS runner.
   - run: hvigorw test -p module=entry -p coverage=false
 
   # Build the HAP
@@ -276,6 +278,7 @@ With `hvigor=true`, the HarmonyOS SDK (API 24) bundled with the DevEco command-l
 - **No automatic device testing.** `LYCIUM_BUILD_CHECK` is set to `false` by default since CI runners are not OpenHarmony devices. Override this variable in a later step if you have a connected device.
 - **SDK layout assumptions.** The action expects `$SDK_PATH/native/llvm/bin/` and a `ohos.toolchain.cmake` under `native/build/cmake/` or `native/build-tools/cmake/share/`. Non-standard SDK layouts will fail the verification step.
 - **DevEco tools size.** With `hvigor=true` the first run downloads ~2.1 GB (cached by `actions/cache` afterwards), and the bundled SDK is fixed at HarmonyOS API 24. `assembleHap` produces unsigned HAPs unless you configure `signingConfigs` in your `build-profile.json5`.
+- **Local Test is macOS/Windows only.** `hvigorw test` (Local Test) hangs on Linux runners (`> hvigor Linux`) — the official FAQ states "Linux环境暂不支持单元测试". The bundled fixture is validated on macOS (2/2 cases pass); on Linux CI use `hvigorw assembleHap` for build verification and run unit tests locally or on a macOS runner.
 
 ## Reference projects
 
