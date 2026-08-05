@@ -1,5 +1,9 @@
 # setup-ohos
 
+[![CI](https://github.com/isaced/setup-ohos/actions/workflows/test.yml/badge.svg)](https://github.com/isaced/setup-ohos/actions/workflows/test.yml)
+[![Version](https://img.shields.io/badge/version-v1-blue)](https://github.com/isaced/setup-ohos/releases/tag/v1)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A GitHub Action to download and set up the OpenHarmony NDK cross-compilation environment, with optional [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) support and an optional DevEco ArkTS toolchain (`hvigorw` / `ohpm`) for building HarmonyOS apps and running Local Tests.
 
 It handles SDK download/extraction, environment variable setup, PATH configuration, and optional setup of lycium, so your workflow can go straight to `cmake` or `./build.sh <package>`. With `hvigor: true` it also installs the DevEco command-line tools so you can run `ohpm install` and `hvigorw test` for ArkTS unit tests.
