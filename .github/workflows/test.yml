@@ -157,3 +157,51 @@ jobs:
         run: |
           test -d "$OHOS_SDK/native"
           echo "SDK-only setup passed!"
+
+  test-hvigor:
+    name: Test hvigor (ArkTS build & Local Test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup DevEco toolchain (hvigorw/ohpm)
+        uses: ./
+        with:
+          hvigor: true
+          lycium: false
+
+      - name: Verify toolchain
+        run: |
+          echo "OHOS_SDK=$OHOS_SDK"
+          echo "OHOS_NDK_HOME=$OHOS_NDK_HOME"
+          echo "DEVECO_ROOT=$DEVECO_ROOT"
+          echo "DEVECO_SDK_HOME=$DEVECO_SDK_HOME"
+          test -x "$DEVECO_ROOT/bin/hvigorw"
+          test -x "$DEVECO_ROOT/bin/ohpm"
+          test -d "$DEVECO_SDK_HOME/default/openharmony/ets"
+          test -d "$OHOS_NDK_HOME/llvm/bin"
+          echo "hvigorw: $(hvigorw --version 2>&1 | head -1)"
+          echo "ohpm: $(ohpm -v 2>&1 | head -1)"
+          echo "toolchain verification passed!"
+
+      - name: Install ohpm dependencies
+        working-directory: tests/fixtures/arkts-app
+        run: ohpm install
+
+      - name: Run Local Test (unit tests)
+        working-directory: tests/fixtures/arkts-app
+        run: hvigorw test -p module=entry -p coverage=false
+
+      - name: Build HAP (unsigned debug)
+        working-directory: tests/fixtures/arkts-app
+        run: hvigorw assembleHap --mode module -p module=entry@default -p buildMode=debug
+
+      - name: Verify build outputs
+        working-directory: tests/fixtures/arkts-app
+        run: |
+          echo "=== Test results ==="
+          find entry -path "*intermediates/test*" -name "*.txt" -exec cat {} \; || true
+          echo "=== HAP artifacts ==="
+          find entry/build -name "*.hap" -type f
+          test -n "$(find entry/build -name '*.hap' -type f)"
+          echo "hvigor build & test passed!"

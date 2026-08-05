@@ -1,8 +1,8 @@
 # setup-ohos
 
-A GitHub Action to download and set up the OpenHarmony NDK cross-compilation environment, with optional [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) support.
+A GitHub Action to download and set up the OpenHarmony NDK cross-compilation environment, with optional [lycium](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) support and an optional DevEco ArkTS toolchain (`hvigorw` / `ohpm`) for building HarmonyOS apps and running Local Tests.
 
-It handles SDK download/extraction, environment variable setup, PATH configuration, and optional setup of lycium, so your workflow can go straight to `cmake` or `./build.sh <package>`.
+It handles SDK download/extraction, environment variable setup, PATH configuration, and optional setup of lycium, so your workflow can go straight to `cmake` or `./build.sh <package>`. With `hvigor: true` it also installs the DevEco command-line tools so you can run `ohpm install` and `hvigorw test` for ArkTS unit tests.
 
 > **What does `lycium: true` include?** The action shallow-clones the complete upstream
 > `tpc_c_cplusplus` repository into `$LYCIUM_HOME`. This provides both the lycium build
@@ -17,6 +17,7 @@ It handles SDK download/extraction, environment variable setup, PATH configurati
 - Detects and exports the CMake toolchain file path (`ohos.toolchain.cmake`)
 - With `lycium: true`, clones the complete [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository, including the build framework and hundreds of existing third-party package recipes
 - Lets lycium resolve and build dependencies declared by an existing package recipe
+- With `hvigor: true`, installs the DevEco command-line tools (hvigorw / ohpm / node / HarmonyOS SDK) so you can build ArkTS projects and run Local Test unit tests
 - Optionally installs build tools (`minimal`, `full`, or `none`)
 - Pure shell implementation — zero dependencies, fully transparent
 
@@ -134,6 +135,33 @@ steps:
 If the custom recipe declares dependencies that are also absent from the cloned catalog,
 add those recipes as well. See lycium's [HPKBUILD template](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus/blob/master/lycium/template/HPKBUILD) for the recipe format.
 
+### Build an ArkTS project & run Local Tests
+
+Setting `hvigor: true` installs the DevEco command-line tools — hvigorw, ohpm,
+node and a complete HarmonyOS SDK (API 24) — so you can build HAPs and run
+unit tests (Local Test) without a device or DevEco Studio:
+
+```yaml
+steps:
+  - uses: actions/checkout@v7
+  - uses: isaced/setup-ohos@v1
+    with:
+      hvigor: true
+
+  # Install oh-package.json5 dependencies (hypium, etc.)
+  - run: ohpm install
+
+  # Run Local Test unit tests (result under <module>/.test/default/intermediates/)
+  - run: hvigorw test -p module=entry -p coverage=false
+
+  # Build the HAP
+  - run: hvigorw assembleHap
+```
+
+With `hvigor: true` the standalone OpenHarmony SDK download is **skipped** — the
+SDK bundled with the DevEco tools is reused as `OHOS_SDK` (so `sdk-version` is
+ignored), and lycium still works against its `native/` directory.
+
 ### Use step outputs instead of env vars
 
 ```yaml
@@ -157,6 +185,12 @@ steps:
 | `lycium-repo` | lycium git repository URL | `https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus.git` |
 | `lycium-ref` | lycium git ref (branch/tag/commit) | `''` (default branch) |
 | `tools` | Tool installation level: `none`, `minimal`, `full` | `minimal` |
+| `hvigor` | Install DevEco command-line tools (hvigorw/ohpm/node/HarmonyOS SDK) for ArkTS build & Local Test. Skips the standalone SDK download and reuses the bundled SDK as `OHOS_SDK` | `false` |
+| `clt-version` | DevEco command-line tools version (mirrored zip filename suffix) | `6.1.1.300` |
+| `clt-url` | Custom DevEco command-line tools download URL (overrides default mirror) | `''` |
+| `jdk-version` | JDK version required by hvigor (only used when `hvigor=true`) | `17` |
+| `pnpm-version` | pnpm version pre-installed for hvigor bootstrap (only used when `hvigor=true`) | `8.13.1` |
+| `ohpm-registry` | ohpm registry URL (only used when `hvigor=true`) | `https://ohpm.openharmony.cn/ohpm/` |
 
 ## Outputs
 
@@ -166,6 +200,8 @@ steps:
 | `ohos-native` | Path to OHOS SDK native directory |
 | `ohos-cmake-toolchain` | Path to `ohos.toolchain.cmake` for CMake cross-compilation |
 | `lycium-home` | Path to the cloned `tpc_c_cplusplus` repository root (empty if `lycium=false`) |
+| `deveco-root` | Path to DevEco command-line tools root (empty if `hvigor=false`) |
+| `deveco-sdk-home` | Path to the DevEco SDK home (empty if `hvigor=false`) |
 
 ## Environment Variables
 
@@ -178,8 +214,13 @@ After this action runs, the following variables are available in subsequent step
 | `OHOS_CMAKE_TOOLCHAIN` | Path to CMake toolchain file |
 | `LYCIUM_BUILD_CHECK` | Set to `false` (skip device tests in CI) |
 | `LYCIUM_HOME` | Cloned `tpc_c_cplusplus` repository root (only if `lycium=true`) |
+| `DEVECO_ROOT` | DevEco command-line tools root (only if `hvigor=true`) |
+| `DEVECO_NODE_HOME` | Bundled node directory, e.g. `$DEVECO_ROOT/tool/node` (only if `hvigor=true`) |
+| `DEVECO_SDK_HOME` | hvigor's view of the SDK root (only if `hvigor=true`) |
+| `NODE_HOME` | Same as `DEVECO_NODE_HOME` (only if `hvigor=true`) |
+| `JAVA_HOME` | JDK set by `actions/setup-java` (only if `hvigor=true`) |
 
-The toolchain binaries (`llvm/bin`) and the SDK's bundled CMake (`build-tools/cmake/bin`) are also prepended to `PATH`.
+The toolchain binaries (`llvm/bin`) and the SDK's bundled CMake (`build-tools/cmake/bin`) are also prepended to `PATH`. With `hvigor=true`, `$DEVECO_ROOT/bin` (hvigorw, ohpm) and `$DEVECO_NODE_HOME/bin` are prepended ahead of them.
 
 ## Tool Levels
 
@@ -192,10 +233,13 @@ The toolchain binaries (`llvm/bin`) and the SDK's bundled CMake (`build-tools/cm
 The action runs as a composite action with the following steps:
 
 1. **Install build tools** (if `tools != 'none'`) — `apt-get install` the selected tool set
-2. **Cache OHOS SDK** — `actions/cache@v6` on `${{ runner.temp }}/ohos-sdk`, keyed by SDK version
-3. **Download and extract SDK** — `curl` + `tar` from Huawei Cloud (or `sdk-url`), extracts the `linux/native/` toolchain
-4. **Set up environment** — exports `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN`, updates `PATH`
-5. **Set up lycium** (if `lycium == 'true'`) — shallow-clones the complete [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The clone includes both the lycium framework (`lycium/build.sh`) and the current upstream recipe catalog (`thirdparty/<package>/HPKBUILD`). No third-party package is compiled until your workflow runs `build.sh`.
+2. **Cache OHOS SDK** — `actions/cache@v6` on `${{ runner.temp }}/ohos-sdk`, keyed by SDK version (skipped when `hvigor=true`)
+3. **Download and extract SDK** — `curl` + `tar` from Huawei Cloud (or `sdk-url`), extracts the `linux/native/` toolchain (skipped when `hvigor=true`)
+4. **Set up JDK** (if `hvigor == 'true'`) — `actions/setup-java@v4` with the requested `jdk-version` (hvigor requires JDK 17+)
+5. **Cache DevEco command-line tools** (if `hvigor == 'true'`) — `actions/cache@v6` on `${{ runner.temp }}/deveco`, keyed by `clt-version`
+6. **Install DevEco command-line tools** (if `hvigor == 'true'`) — downloads and extracts the [mirrored zip](https://github.com/isaced/setup-ohos/releases/download/v1/commandline-tools-linux-x64-6.1.1.300.zip) (hvigor 6.24.4 / ohpm 6.1.2.285 / node 18 / HarmonyOS SDK API 24), configures the ohpm registry and pre-installs pnpm
+7. **Set up environment** — exports `OHOS_SDK`, `OHOS_NDK_HOME`, `OHOS_CMAKE_TOOLCHAIN` (+ `DEVECO_ROOT`, `DEVECO_SDK_HOME`, `NODE_HOME` when `hvigor=true`), updates `PATH`
+8. **Set up lycium** (if `lycium == 'true'`) — shallow-clones the complete [`tpc_c_cplusplus`](https://gitcode.com/CPF-ApplicationTPC/tpc_c_cplusplus) repository into `$LYCIUM_HOME`. The clone includes both the lycium framework (`lycium/build.sh`) and the current upstream recipe catalog (`thirdparty/<package>/HPKBUILD`). No third-party package is compiled until your workflow runs `build.sh`.
 
 After setup, the directory layout is:
 
@@ -214,7 +258,7 @@ All scripts live under [`scripts/`](./scripts) and are plain bash — no Node.js
 
 ## Supported SDK Versions
 
-Tested against the following OpenHarmony SDK releases:
+Tested against the following OpenHarmony SDK releases (standalone mode, `hvigor=false`):
 
 | Version | Status |
 |---------|--------|
@@ -224,11 +268,14 @@ Tested against the following OpenHarmony SDK releases:
 
 Other versions available on the [Huawei Cloud mirror](https://repo.huaweicloud.com/openharmony/os/) should work as long as the SDK archive layout matches (`linux/native/` with `llvm/bin/` and a `ohos.toolchain.cmake`).
 
+With `hvigor=true`, the HarmonyOS SDK (API 24) bundled with the DevEco command-line tools is used instead and `sdk-version` is ignored.
+
 ## Limitations
 
 - **Linux runners only.** The action removes the Windows SDK portion and relies on `apt-get` for tool installation. Use `runs-on: ubuntu-latest`.
 - **No automatic device testing.** `LYCIUM_BUILD_CHECK` is set to `false` by default since CI runners are not OpenHarmony devices. Override this variable in a later step if you have a connected device.
 - **SDK layout assumptions.** The action expects `$SDK_PATH/native/llvm/bin/` and a `ohos.toolchain.cmake` under `native/build/cmake/` or `native/build-tools/cmake/share/`. Non-standard SDK layouts will fail the verification step.
+- **DevEco tools size.** With `hvigor=true` the first run downloads ~2.1 GB (cached by `actions/cache` afterwards), and the bundled SDK is fixed at HarmonyOS API 24. `assembleHap` produces unsigned HAPs unless you configure `signingConfigs` in your `build-profile.json5`.
 
 ## Reference projects
 

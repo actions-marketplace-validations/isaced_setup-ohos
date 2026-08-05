@@ -1,12 +1,12 @@
 name: 'setup-ohos'
-description: 'Download and cache the OpenHarmony NDK, set up cross-compilation environment, optionally install lycium framework'
+description: 'Download and cache the OpenHarmony NDK, set up cross-compilation environment, optionally install lycium framework and DevEco ArkTS toolchain (hvigorw/ohpm)'
 branding:
   icon: 'cpu'
   color: 'blue'
 
 inputs:
   sdk-version:
-    description: 'OpenHarmony SDK version (e.g. 5.0-Release, 6.1-Release)'
+    description: 'OpenHarmony SDK version (e.g. 5.0-Release, 6.1-Release). Ignored when hvigor=true (the DevEco command-line tools bundle their own HarmonyOS SDK)'
     required: false
     default: '6.1-Release'
   sdk-url:
@@ -29,6 +29,30 @@ inputs:
     description: 'Tool installation level: none, minimal (lycium checkbuildenv), full (Docker-equivalent)'
     required: false
     default: 'minimal'
+  hvigor:
+    description: 'Install DevEco command-line tools (hvigorw/ohpm/node/HarmonyOS SDK) for ArkTS build & Local Test. When true, the standalone OpenHarmony SDK download is skipped and its bundled SDK is reused as OHOS_SDK'
+    required: false
+    default: 'false'
+  clt-version:
+    description: 'DevEco command-line tools version (mirrored zip filename suffix)'
+    required: false
+    default: '6.1.1.300'
+  clt-url:
+    description: 'Custom DevEco command-line tools download URL (overrides default mirror)'
+    required: false
+    default: ''
+  jdk-version:
+    description: 'JDK version required by the hvigor build pipeline (only used when hvigor=true)'
+    required: false
+    default: '17'
+  pnpm-version:
+    description: 'pnpm version pre-installed for hvigor bootstrap (only used when hvigor=true)'
+    required: false
+    default: '8.13.1'
+  ohpm-registry:
+    description: 'ohpm registry URL (only used when hvigor=true)'
+    required: false
+    default: 'https://ohpm.openharmony.cn/ohpm/'
 
 outputs:
   ohos-sdk:
@@ -43,6 +67,12 @@ outputs:
   lycium-home:
     description: 'Path to lycium framework root (empty if lycium=false)'
     value: ${{ steps.lycium.outputs.lycium-home }}
+  deveco-root:
+    description: 'Path to DevEco command-line tools root (empty if hvigor=false)'
+    value: ${{ steps.env.outputs.deveco-root }}
+  deveco-sdk-home:
+    description: 'Path to the DevEco SDK home (empty if hvigor=false)'
+    value: ${{ steps.env.outputs.deveco-sdk-home }}
 
 runs:
   using: 'composite'
@@ -56,6 +86,7 @@ runs:
 
     - name: Cache OHOS SDK
       id: sdk-cache
+      if: inputs.hvigor != 'true'
       uses: actions/cache@v6
       with:
         path: ${{ runner.temp }}/ohos-sdk/${{ inputs.sdk-version }}
@@ -65,6 +96,7 @@ runs:
 
     - name: Download and extract OHOS SDK
       id: sdk
+      if: inputs.hvigor != 'true'
       shell: bash
       run: ${{ github.action_path }}/scripts/download-sdk.sh
       env:
@@ -72,12 +104,43 @@ runs:
         SDK_URL: ${{ inputs.sdk-url }}
         SDK_CACHE_HIT: ${{ steps.sdk-cache.outputs.cache-hit }}
 
+    - name: Set up JDK (hvigor)
+      id: jdk
+      if: inputs.hvigor == 'true'
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ inputs.jdk-version }}
+
+    - name: Cache DevEco command-line tools
+      id: deveco-cache
+      if: inputs.hvigor == 'true'
+      uses: actions/cache@v6
+      with:
+        path: ${{ runner.temp }}/deveco
+        key: deveco-${{ inputs.clt-version }}
+        restore-keys: |
+          deveco-
+
+    - name: Install DevEco command-line tools (hvigorw/ohpm/node/SDK)
+      id: deveco
+      if: inputs.hvigor == 'true'
+      shell: bash
+      run: ${{ github.action_path }}/scripts/install-deveco.sh
+      env:
+        CLT_VERSION: ${{ inputs.clt-version }}
+        CLT_URL: ${{ inputs.clt-url }}
+        CLT_CACHE_HIT: ${{ steps.deveco-cache.outputs.cache-hit }}
+        PNPM_VERSION: ${{ inputs.pnpm-version }}
+        OHPM_REGISTRY: ${{ inputs.ohpm-registry }}
+
     - name: Set up environment
       id: env
       shell: bash
       run: ${{ github.action_path }}/scripts/setup-env.sh
       env:
         SDK_PATH: ${{ steps.sdk.outputs.sdk-path }}
+        HVIGOR_MODE: ${{ inputs.hvigor }}
 
     - name: Set up lycium
       id: lycium

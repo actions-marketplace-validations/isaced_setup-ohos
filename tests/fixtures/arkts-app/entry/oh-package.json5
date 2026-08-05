@@ -1,0 +1,9 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "entry module of the ArkTS fixture",
+  "main": "",
+  "author": "setup-ohos",
+  "license": "MIT",
+  "dependencies": {}
+}

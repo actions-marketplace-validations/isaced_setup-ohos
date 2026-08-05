@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "ArkTS fixture entry module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "ArkTS fixture ability"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "ArkTSFixture"
+    }
+  ]
+}

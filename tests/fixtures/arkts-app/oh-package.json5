@@ -1,0 +1,12 @@
+{
+  "name": "arkts-app",
+  "version": "1.0.0",
+  "description": "Minimal ArkTS fixture used by setup-ohos CI to validate hvigorw build & Local Test",
+  "main": "",
+  "author": "setup-ohos",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@ohos/hypium": "1.0.19"
+  }
+}
